@@ -1,0 +1,23 @@
+services:
+  # Backend Node.js Web Service
+  - type: web
+    name: buy2enjoy-api
+    env: node
+    plan: free
+    repo: https://github.com/DEVENDRA4774/buy2enjoy
+    rootDir: backend
+    startCommand: npm start
+    buildCommand: npm install
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false # Set this in the Render dashboard securely
+      - key: JWT_SECRET
+        sync: false # Set this in the Render dashboard securely
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

@@ -1,0 +1,405 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../utils/api';
+import { Search, ShoppingBag, Plane, Stethoscope, Wallet, ChevronRight, CloudLightning, ThermometerSun } from 'lucide-react';
+import SmartButton from '../components/SmartButton';
+import LocationContext from '../context/LocationContext';
+import AuthContext from '../context/AuthContext';
+
+const Home = () => {
+    const { user } = useContext(AuthContext);
+    const { location } = useContext(LocationContext);
+    const [searchQuery, setSearchQuery] = useState('');
+    const navigate = useNavigate();
+
+    // Dynamically generate categories based on location and weather
+    const getDynamicCategories = () => {
+        const baseCategories = [
+            {
+                title: 'Shop Limitless',
+                icon: <ShoppingBag size={28} className="text-pink-400" />,
+                color: 'rgba(236, 72, 153, 0.2)',
+                borderColor: 'rgba(236, 72, 153, 0.5)',
+                description: 'From everyday essentials to next-gen electronics and fashion, find exactly what you want, when you want it.',
+                links: ['📱 Browse Latest Electronics', '👕 Explore Trending Fashion', '🛒 Stock up on Groceries', '📦 Re-order Favorites'],
+                path: '/'
+            },
+            {
+                title: 'Travel Live',
+                icon: <Plane size={28} className="text-blue-400" />,
+                color: 'rgba(96, 165, 250, 0.2)',
+                borderColor: 'rgba(96, 165, 250, 0.5)',
+                description: 'Never guess your departure time again. Book flights, trains, and boats with real-time, heartbeat status updates.',
+                links: ['✈️ Secure Flight Tickets', '🚆 Track Express Trains', '🚢 Browse Ocean Cruises', '🚌 Intercity Bus Routes'],
+                path: '/booking'
+            },
+            {
+                title: 'Health First',
+                icon: <Stethoscope size={28} className="text-emerald-400" />,
+                color: 'rgba(52, 211, 153, 0.2)',
+                borderColor: 'rgba(52, 211, 153, 0.5)',
+                description: 'Your well-being, prioritized. Securely book doctor appointments, manage prescriptions, and access lab results in total privacy.',
+                links: ['👨‍⚕️ Book an Online Consult', '💊 Auto-Refill Prescriptions', '🔬 View Private Lab Results'],
+                path: '/health'
+            },
+            {
+                title: 'Universal Wallet',
+                icon: <Wallet size={28} className="text-purple-400" />,
+                color: 'rgba(167, 139, 250, 0.2)',
+                borderColor: 'rgba(167, 139, 250, 0.5)',
+                description: 'Earn loyalty rewards across every sector. Pay bills, recharge, and checkout instantly with one unified balance.',
+                links: ['⚡ 1-Click Bill Payments', '🔋 Instant Mobile Recharge', '💎 View Loyalty Rewards'],
+                path: '/wallet'
+            }
+        ];
+
+        // Apply Weather-Synced Commerce
+        if (location?.weather === 'rain') {
+            baseCategories[0].links.unshift('☔ Waterproof Gear & Umbrellas');
+            baseCategories[0].description = `It's raining in ${location.city}! Stay dry with our 30-min delivery on essentials.`;
+        } else if (location?.weather === 'heatwave') {
+            baseCategories[0].links.unshift('🌡️ Fans & Coolers 15-Min Drop');
+            baseCategories[0].description = `Heatwave alert in ${location.city}! Cool down fast with our priority AC & Fan delivery.`;
+        }
+
+        // Apply Micro-Fulfillment & Local Modules
+        if (location?.city && location.city !== 'Loading...') {
+            baseCategories[0].links.push(`🛵 Micro-Drop in ${location.city}`);
+            baseCategories[1].links.unshift(`🚌 Local Transit for ${location.city}`);
+            baseCategories[2].links.unshift(`🏥 Live Clinic Wait in ${location.city}`);
+            baseCategories[2].links.unshift(`💊 SOS 24/7 Pharmacy near ${location.city}`);
+            baseCategories[3].links.unshift(`🎟️ Weekend Gigs in ${location.city}`);
+        }
+
+        return baseCategories;
+    };
+
+    const categories = getDynamicCategories();
+
+    const [bookedFlight, setBookedFlight] = useState(localStorage.getItem('bookedFlight'));
+    const [bookedDoctor, setBookedDoctor] = useState(localStorage.getItem('bookedDoctor'));
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+    return (
+        <div style={{ pointerEvents: 'none', minHeight: '80vh', display: 'flex', flexDirection: 'column', paddingTop: '2rem' }}>
+
+            {/* Hero Section */}
+            <div style={{ textAlign: 'center', marginBottom: '2rem', pointerEvents: 'auto' }}>
+                <h1 style={{ color: 'white', textShadow: '0 4px 15px rgba(0,0,0,0.8)', fontSize: '3.5rem', marginBottom: '0.5rem', fontWeight: '800' }}>
+                    Shop, Travel, and Thrive. All in One Place.
+                </h1>
+                <p style={{ color: '#cbd5e1', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto', marginBottom: '2rem', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+                    Buy groceries, book a train, and see a doctor—without opening three different tabs.
+                </p>
+            </div>
+
+            {/* Universal Search Bar */}
+            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '600px', marginBottom: '3rem' }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'rgba(30, 41, 59, 0.85)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '50px',
+                    padding: '0.75rem 1.5rem',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                }}>
+                    <Search size={20} className="text-secondary mr-3" />
+                    <input
+                        type="text"
+                        placeholder={placeholders[placeholderIndex]}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{
+                            flex: 1,
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'white',
+                            fontSize: '1rem',
+                            outline: 'none',
+                            transition: 'color 0.5s ease',
+                        }}
+                    />
+                    <div style={{ background: '#6366f1', padding: '0.4rem 1.25rem', borderRadius: '30px', color: 'white', fontWeight: 'bold', cursor: 'pointer', marginLeft: '10px' }}>
+                        Search
+                    </div>
+                </div>
+
+                {/* Micro-copy below search */}
+                <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.9rem', color: '#94a3b8' }}>
+                    Trending right now: <span style={{ color: '#cbd5e1' }}>🚄 Express Rail to NY</span> | <span style={{ color: '#cbd5e1' }}>👕 Cyberpunk Apparel</span> | <span style={{ color: '#cbd5e1' }}>🩺 Online Consults</span>
+                </div>
+            </div>
+
+            {/* 1. The Dynamic Context Banner */}
+            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '800px', marginBottom: '3rem' }}>
+                <Link to={contextBanner.action}>
+                    <div className={`p-4 rounded-xl shadow-lg border-l-4 ${contextBanner.border} flex items-center justify-between hover:scale-105 transition-transform duration-300`} style={{ background: contextBanner.bg }}>
+                        <div className="flex items-center gap-4">
+                            <span className="text-3xl">{contextBanner.icon}</span>
+                            <div>
+                                <h3 className="text-white font-bold text-lg m-0 leading-tight">{contextBanner.title}</h3>
+                                <p className="text-white/80 text-sm m-0 mt-1">{contextBanner.subtitle}</p>
+                            </div>
+                        </div>
+                        <ChevronRight className="text-white/50" />
+                    </div>
+                </Link>
+            </div>
+
+            {/* Smart Home Dashboard Grid */}
+            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '1000px', marginBottom: '4rem' }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {dynamicCategories.map((category, idx) => (
+                        <div key={idx} style={{
+                            background: 'rgba(15, 23, 42, 0.75)',
+                            backdropFilter: 'blur(16px)',
+                            border: `1px solid ${category.borderColor}`,
+                            borderRadius: '24px',
+                            padding: '1.5rem',
+                            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                            cursor: 'pointer',
+                            boxShadow: `0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px ${category.color}`
+                        }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-5px)';
+                                e.currentTarget.style.boxShadow = `0 15px 40px rgba(0,0,0,0.5), inset 0 0 30px ${category.color}`;
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = `0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px ${category.color}`;
+                            }}
+                        >
+                            <Link to={category.path} style={{ display: 'block', color: 'inherit', textDecoration: 'none' }}>
+                                <div className="flex items-center mb-4">
+                                    <div style={{
+                                        padding: '12px',
+                                        borderRadius: '16px',
+                                        background: category.color,
+                                        marginRight: '1rem'
+                                    }}>
+                                        {category.icon}
+                                    </div>
+                                    <h3 className="text-2xl font-bold m-0" style={{ color: 'white' }}>{category.title}</h3>
+                                </div>
+
+                                <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                                    {category.description}
+                                </p>
+
+                                <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+                                    {category.links.map((link, i) => {
+                                        const match = link.match(/^(\p{Extended_Pictographic}|\S+)\s+(.*)$/u);
+                                        const icon = match ? match[1] : <ChevronRight size={16} color={category.borderColor} />;
+                                        const label = match ? match[2] : link;
+                                        const isHighlight = link.includes('☔') || link.includes('🌡️') || link.includes('�') || link.includes('🚌') || link.includes('🏥') || link.includes('💊') || link.includes('🎟️');
+
+                                        return (
+                                            <li key={i} style={{ borderBottom: i === category.links.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
+                                                <SmartButton
+                                                    icon={icon}
+                                                    label={label}
+                                                    destination={category.path}
+                                                    onClickOverride={(e) => {
+                                                        if (category.title === 'Health First' && link.includes('Doctor')) {
+                                                            handleLinkClick(e, link, category.title);
+                                                        } else {
+                                                            // Default action: let the destination handle it
+                                                            // we pass undefined to override so it falls back to navigate
+                                                        }
+                                                    }}
+                                                    customClass={`w-full justify-start text-left px-2 py-3 hover:bg-white/5 ${isHighlight ? 'text-[#fcd34d] font-bold' : 'text-[#cbd5e1]'}`}
+                                                />
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 2. City Guide Carousel (Discover This Week) */}
+            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '1000px', marginBottom: '4rem' }}>
+                <div className="flex items-center justify-between mb-4 px-2">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white text-shadow-md">Discover This Week in {location?.city || 'Your Area'}</h2>
+                        <p className="text-gray-400 text-sm mt-1">Hyper-local events, movies, and quick getaways.</p>
+                    </div>
+                    <SmartButton
+                        label="See All"
+                        customClass="text-indigo-400 hover:text-indigo-300 font-bold text-sm bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full"
+                        textClass="" hoverClass=""
+                        destination="/wallet"
+                    />
+                </div>
+
+                <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbars" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {/* The Blockbuster Integration */}
+                    <div className="snap-start flex-shrink-0 w-72 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 shadow-xl group cursor-pointer relative">
+                        <div className="h-40 bg-[url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center group-hover:scale-105 transition-transform duration-500">
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
+                        </div>
+                        <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">Trending Now</div>
+                        <div className="p-4 relative -mt-10">
+                            <h3 className="text-white font-bold text-lg mb-1">Dune: Part Two</h3>
+                            <p className="text-gray-400 text-sm mb-3">IMAX 3D • PVR Icon, {location?.city || 'Local'}</p>
+                            <SmartButton
+                                label="Book 2 Seats"
+                                icon="🎟️"
+                                customClass="w-full bg-red-600 hover:bg-red-500 text-white justify-center"
+                                destination="/wallet"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Micro-Tourism: Weekend Trek */}
+                    <div className="snap-start flex-shrink-0 w-72 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 shadow-xl group cursor-pointer relative">
+                        <div className="h-40 bg-[url('https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center group-hover:scale-105 transition-transform duration-500">
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
+                        </div>
+                        <div className="absolute top-3 left-3 bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded">Weekend Escapes</div>
+                        <div className="p-4 relative -mt-10">
+                            <h3 className="text-white font-bold text-lg mb-1">Local Valley Trek</h3>
+                            <p className="text-gray-400 text-sm mb-3">Pickup at 6 AM • Includes Breakfast</p>
+                            <SmartButton
+                                label="Book Trek & Cab"
+                                icon="⛰️"
+                                customClass="w-full bg-emerald-600 hover:bg-emerald-500 text-white justify-center"
+                                destination="/booking"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Live Events & Concerts */}
+                    <div className="snap-start flex-shrink-0 w-72 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 shadow-xl group cursor-pointer relative">
+                        <div className="h-40 bg-[url('https://images.unsplash.com/photo-1540039155732-680874b8fc47?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center group-hover:scale-105 transition-transform duration-500">
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
+                        </div>
+                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded">Live Music</div>
+                        <div className="p-4 relative -mt-10">
+                            <h3 className="text-white font-bold text-lg mb-1">Acoustic Friday Night</h3>
+                            <p className="text-gray-400 text-sm mb-3">Hard Rock Cafe, 5km away</p>
+                            <SmartButton
+                                label="Reserve Table"
+                                icon="🎸"
+                                customClass="w-full bg-purple-600 hover:bg-purple-500 text-white justify-center"
+                                destination="/wallet"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Trust and Security Section: Verified Local Engine */}
+            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '1000px', marginTop: '1rem', marginBottom: '3rem' }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.5rem',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '24px',
+                    padding: '2rem 3rem',
+                    textAlign: 'center'
+                }}>
+                    <h2 className="text-2xl font-bold mb-2" style={{ color: 'white', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>The "Verified Local" Guarantee</h2>
+                    <p className="text-gray-400 text-sm mb-4">Every vendor is strictly vetted for your safety. Look for these badges before you book.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                        {/* Medical Shield */}
+                        <div style={{ background: 'rgba(56, 189, 248, 0.05)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)' }} className="relative">
+                            <div className="absolute top-3 right-3 bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-1 rounded-full border border-slate-700 shadow-sm">Live Since 2026</div>
+                            <div className="flex items-center gap-3 mb-3">
+                                <div style={{ background: 'rgba(56, 189, 248, 0.2)', padding: '8px', borderRadius: '50%' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-sky-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+                                </div>
+                                <h3 className="text-lg font-bold m-0" style={{ color: 'white' }}>License Verified</h3>
+                            </div>
+                            <p style={{ color: '#cbd5e1', fontSize: '0.90rem', margin: 0, lineHeight: '1.5' }}>
+                                🩺 Medical clinics & pharmacies are heavily vetted before listing.
+                            </p>
+                        </div>
+
+                        {/* Retail Star */}
+                        <div style={{ background: 'rgba(250, 204, 21, 0.05)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(250, 204, 21, 0.2)' }} className="relative">
+                            <div className="absolute top-3 right-3 bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-1 rounded-full border border-slate-700 shadow-sm">Live Since 2026</div>
+                            <div className="flex items-center gap-3 mb-3">
+                                <div style={{ background: 'rgba(250, 204, 21, 0.2)', padding: '8px', borderRadius: '50%' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-yellow-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                </div>
+                                <h3 className="text-lg font-bold m-0" style={{ color: 'white' }}>Top Rated Seller</h3>
+                            </div>
+                            <p style={{ color: '#cbd5e1', fontSize: '0.90rem', margin: 0, lineHeight: '1.5' }}>
+                                🛍️ Only the highest quality local retail and grocery nodes.
+                            </p>
+                        </div>
+
+                        {/* Transit Check */}
+                        <div style={{ background: 'rgba(52, 211, 153, 0.05)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(52, 211, 153, 0.2)' }} className="relative">
+                            <div className="absolute top-3 right-3 bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-1 rounded-full border border-slate-700 shadow-sm">Live Since 2026</div>
+                            <div className="flex items-center gap-3 mb-3">
+                                <div style={{ background: 'rgba(52, 211, 153, 0.2)', padding: '8px', borderRadius: '50%' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-emerald-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 className="text-lg font-bold m-0" style={{ color: 'white' }}>Safety Checked</h3>
+                            </div>
+                            <p style={{ color: '#cbd5e1', fontSize: '0.90rem', margin: 0, lineHeight: '1.5' }}>
+                                🚗 Local cabs and tour guides are verified for absolute security.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Vendor Onboarding Pitch */}
+            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '1000px', marginBottom: '5rem' }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.5rem',
+                    background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '24px',
+                    padding: '3rem',
+                    textAlign: 'center',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.4), inset 0 0 30px rgba(59, 130, 246, 0.1)'
+                }}>
+                    <h2 className="text-3xl font-bold mb-2 text-white">Partner with Buy2Enjoy</h2>
+                    <p className="text-[#cbd5e1] text-lg max-w-2xl mx-auto mb-6">Stop competing with giant delivery apps. We take a minimal flat fee and give you instant access to thousands of users right in your pin code.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mb-6">
+                        <div className="bg-white/5 border border-white/10 p-5 rounded-xl hover:bg-white/10 transition-colors">
+                            <h4 className="text-emerald-400 font-bold text-lg mb-2 flex items-center gap-2"><span>🏥</span> Pharmacies</h4>
+                            <p className="text-sm text-gray-300">Deliver your stock locally within 30 minutes without the 30% aggregator cut.</p>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 p-5 rounded-xl hover:bg-white/10 transition-colors">
+                            <h4 className="text-purple-400 font-bold text-lg mb-2 flex items-center gap-2"><span>⛰️</span> Local Guides</h4>
+                            <p className="text-sm text-gray-300">List your weekend treks for free. We only get paid when you get a verified booking.</p>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 p-5 rounded-xl hover:bg-white/10 transition-colors">
+                            <h4 className="text-blue-400 font-bold text-lg mb-2 flex items-center gap-2"><span>🩺</span> Clinics</h4>
+                            <p className="text-sm text-gray-300">Stop WhatsApp chaos. Use our calendar. We charge deposits to stop no-shows.</p>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center">
+                        <SmartButton
+                            label="Claim Your Local Business Profile"
+                            icon="🚀"
+                            customClass="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 text-lg rounded-full"
+                            destination="/wallet"
+                        />
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    );
+};
+
+export default Home;
