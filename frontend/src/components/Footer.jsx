@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, Package } from 'lucide-react';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
     const [showTrackingModal, setShowTrackingModal] = useState(false);
+
+    const location = useLocation();
 
     return (
         <footer style={{
@@ -19,34 +21,36 @@ const Footer = () => {
             textAlign: 'left'
         }}>
             <div className="w-full max-w-7xl mx-auto px-6" style={{ margin: '0 auto' }}>
-                {/* About Us / The Story */}
-                <div className="mb-16 text-center max-w-4xl mx-auto" style={{
-                    margin: '0 auto',
-                    background: 'rgba(15, 23, 42, 0.65)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '24px',
-                    padding: '3rem 2.5rem',
-                    boxShadow: '0 15px 35px rgba(0,0,0,0.4)'
-                }}>
-                    <h2 className="text-3xl font-bold mb-6" style={{
-                        background: 'linear-gradient(to right, #60a5fa, #c084fc)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        display: 'inline-block'
+                {/* About Us / The Story - Only visible on the Home Page */}
+                {location.pathname === '/' && (
+                    <div className="mb-16 text-center max-w-4xl mx-auto" style={{
+                        margin: '0 auto',
+                        background: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '24px',
+                        padding: '3rem 2.5rem',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.4)'
                     }}>
-                        Your Entire World, Simplified.
-                    </h2>
-                    <p className="mb-6 opacity-90 leading-relaxed text-lg" style={{ textAlign: 'center' }}>
-                        At Buy2Enjoy, we believe your time is your most valuable asset. We grew tired of juggling a dozen different tabs and apps just to manage our daily lives—so we built a better way.
-                    </p>
-                    <p className="mb-6 opacity-90 leading-relaxed text-lg" style={{ textAlign: 'center' }}>
-                        We have designed a single, seamless universe where your everyday needs meet global exploration. Whether you are restocking your pantry with fresh groceries, tracking a live express train across the country, or securely consulting with a top-tier doctor, our platform brings the world directly to your fingertips.
-                    </p>
-                    <p className="m-0 font-bold text-[#60a5fa] leading-relaxed text-lg" style={{ textAlign: 'center' }}>
-                        No more switching between screens. From upgrading your electronics to booking your next great adventure, Buy2Enjoy is built to move at the speed of your life.
-                    </p>
-                </div>
+                        <h2 className="text-3xl font-bold mb-6" style={{
+                            background: 'linear-gradient(to right, #60a5fa, #c084fc)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            display: 'inline-block'
+                        }}>
+                            Your Entire World, Simplified.
+                        </h2>
+                        <p className="mb-6 opacity-90 leading-relaxed text-lg" style={{ textAlign: 'center' }}>
+                            At Buy2Enjoy, we believe your time is your most valuable asset. We grew tired of juggling a dozen different tabs and apps just to manage our daily lives—so we built a better way.
+                        </p>
+                        <p className="mb-6 opacity-90 leading-relaxed text-lg" style={{ textAlign: 'center' }}>
+                            We have designed a single, seamless universe where your everyday needs meet global exploration. Whether you are restocking your pantry with fresh groceries, tracking a live express train across the country, or securely consulting with a top-tier doctor, our platform brings the world directly to your fingertips.
+                        </p>
+                        <p className="m-0 font-bold text-[#60a5fa] leading-relaxed text-lg" style={{ textAlign: 'center' }}>
+                            No more switching between screens. From upgrading your electronics to booking your next great adventure, Buy2Enjoy is built to move at the speed of your life.
+                        </p>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* About Section */}

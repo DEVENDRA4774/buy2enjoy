@@ -1,10 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { User, Shield, CreditCard, Activity, Settings, Package, Plane, Stethoscope } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-    const { user, logoutUser } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('account');
 
     // Dummy data for visual representation until backend is hooked up
@@ -175,8 +176,8 @@ const Profile = () => {
 
                         <div className="pt-4 mt-4 border-t border-gray-700">
                             <button
-                                className="w-full flex items-center gap-3 p-3 rounded-lg text-red-400 hover:bg-red-400/10 transition-colors"
-                                onClick={logoutUser}
+                                className="w-full flex items-center justify-center font-bold gap-3 p-3 rounded-lg text-white bg-red-600 hover:bg-red-500 transition-colors shadow-lg"
+                                onClick={async () => { await logout(); navigate('/login'); }}
                             >
                                 Logout
                             </button>

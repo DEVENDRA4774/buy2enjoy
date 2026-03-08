@@ -47,8 +47,8 @@ const Navbar = () => {
         }
     }, [socket]);
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/login');
     };
 
@@ -59,7 +59,7 @@ const Navbar = () => {
                     <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-xl shadow-lg ring-1 ring-white/20">
                         <Store size={22} className="text-white" />
                     </div>
-                    <span className="font-extrabold text-2xl tracking-tight text-white drop-shadow-sm">Buy2<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Enjoy</span></span>
+                    <span className="font-black text-3xl font-sans tracking-tighter text-white drop-shadow-sm">Buy2<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Enjoy</span></span>
                 </Link>
                 <div className="nav-links flex items-center">
                     {/* Global Location Selector */}
@@ -102,6 +102,17 @@ const Navbar = () => {
                         icon={<Package size={20} />}
                         label="Live Booking"
                     />
+
+                    <div id="nav-cart-icon" className={animateCart ? 'animate-cart-pop flex items-center mr-3' : 'flex items-center mr-3'}>
+                        <SmartButton
+                            onClickOverride={() => setIsCartDrawerOpen(true)}
+                            customClass="nav-link p-0 hover:text-primary transition-colors cursor-pointer"
+                            textClass=""
+                            hoverClass=""
+                            icon={<ShoppingCart size={20} />}
+                            label={<>Cart {cartCount > 0 && <span className="absolute -top-1.5 -right-2 bg-indigo-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold px-1">{cartCount}</span>}</>}
+                        />
+                    </div>
 
                     {user && (
                         <div className="relative flex items-center cursor-pointer mr-2">
@@ -175,7 +186,7 @@ const Navbar = () => {
                             )}
                             <SmartButton
                                 onClickOverride={handleLogout}
-                                customClass="btn btn-outline"
+                                customClass="nav-link text-red-400 hover:text-red-300 font-bold p-0 ml-2 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-all"
                                 textClass="" hoverClass=""
                                 icon={<LogOut size={16} />}
                                 label="Logout"
@@ -195,7 +206,7 @@ const Navbar = () => {
 
             {/* Cart Slide-Drawer */}
             <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity duration-300 ${isCartDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsCartDrawerOpen(false)}></div>
-            <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-slate-900 border-l border-slate-700 shadow-2xl z-[101] transform transition-transform duration-300 ease-out ${isCartDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-slate-900 border-l border-slate-700 shadow-2xl z-[101] transform transition-all duration-300 ease-out ${isCartDrawerOpen ? 'translate-x-0 opacity-100' : 'translate-x-[105%] opacity-0 pointer-events-none'}`}>
                 <div className="p-6 h-full flex flex-col">
                     <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2"><ShoppingCart className="text-indigo-400" /> Your Cart</h2>

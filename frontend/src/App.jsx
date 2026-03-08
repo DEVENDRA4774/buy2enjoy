@@ -24,7 +24,6 @@ function App() {
   return (
     <Router>
       <ThreeDBackground />
-      <MiniWallet />
       <Navbar />
       <main>
         <Routes>
