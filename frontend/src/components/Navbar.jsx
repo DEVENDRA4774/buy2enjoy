@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Package, Bell, MapPin, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Package, Bell, MapPin, ChevronDown, Store } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import CartContext from '../context/CartContext';
 import SocketContext from '../context/SocketContext';
@@ -55,9 +55,11 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-container">
-                <Link to="/" className="navbar-brand">
-                    <Package size={28} className="text-primary" />
-                    Buy2<span>Enjoy</span>
+                <Link to="/" className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-xl shadow-lg ring-1 ring-white/20">
+                        <Store size={22} className="text-white" />
+                    </div>
+                    <span className="font-extrabold text-2xl tracking-tight text-white drop-shadow-sm">Buy2<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Enjoy</span></span>
                 </Link>
                 <div className="nav-links flex items-center">
                     {/* Global Location Selector */}
@@ -100,16 +102,7 @@ const Navbar = () => {
                         icon={<Package size={20} />}
                         label="Live Booking"
                     />
-                    <div id="nav-cart-icon" className={animateCart ? 'animate-cart-pop flex items-center' : 'flex items-center'}>
-                        <SmartButton
-                            onClickOverride={() => setIsCartDrawerOpen(true)}
-                            customClass="nav-link p-0 hover:text-primary transition-colors cursor-pointer"
-                            textClass=""
-                            hoverClass=""
-                            icon={<ShoppingCart size={20} />}
-                            label={<>Cart {cartCount > 0 && <span className="badge ml-1">{cartCount}</span>}</>}
-                        />
-                    </div>
+
                     {user && (
                         <div className="relative flex items-center cursor-pointer mr-2">
                             <div onClick={() => setShowNotifications(!showNotifications)}>

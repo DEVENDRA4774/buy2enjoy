@@ -7,7 +7,9 @@ const Product = require('./models/Product.js');
 const Order = require('./models/Order.js');
 const connectDB = require('./config/db.js');
 
-dotenv.config();
+const path = require('path');
+
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 connectDB();
 
@@ -17,7 +19,11 @@ const importData = async () => {
         await Product.deleteMany();
         await User.deleteMany();
 
-        const createdUsers = await User.insertMany(users);
+        const createdUsers = [];
+        for (const user of users) {
+            const createdUser = await User.create(user);
+            createdUsers.push(createdUser);
+        }
 
         const adminUser = createdUsers[0]._id;
 
