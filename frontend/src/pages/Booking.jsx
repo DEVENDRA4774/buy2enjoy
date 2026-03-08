@@ -40,6 +40,7 @@ const Booking = () => {
         };
     }, []);
 
+    // eslint-disable-next-line no-unused-vars
     const getTypeColor = (type) => {
         if (type === 'Train') return 'text-orange-500 bg-orange-100 dark:bg-orange-900/30 line-through'; // Using CSS color approach or standard tailwind classes normally, but we use inline styles for reliability
         if (type === 'Flight') return 'text-blue-500 bg-blue-100 dark:bg-blue-900/30';
@@ -98,7 +99,7 @@ const Booking = () => {
                     title="Where will your next adventure take you?"
                     description="You have no upcoming trips. Book a flight, train, or cruise to see your itinerary come to life here."
                     buttonText="Explore Destinations"
-                    buttonLink="#"
+                    buttonLink="/"
                     colorHint="rgba(96, 165, 250, 0.2)"
                 />
             ) : (

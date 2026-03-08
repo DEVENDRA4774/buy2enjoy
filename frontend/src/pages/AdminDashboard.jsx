@@ -21,7 +21,6 @@ const AdminDashboard = () => {
 
         const fetchData = async () => {
             try {
-                const config = { headers: { Authorization: `Bearer ${document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1")}` } };
                 // Fetch orders directly, skipping Auth header as cookie is http-only
                 const [ordersRes, productsRes] = await Promise.all([
                     api.get('/orders'),

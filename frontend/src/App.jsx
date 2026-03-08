@@ -18,6 +18,7 @@ import Health from './pages/Health';
 import WalletPage from './pages/Wallet';
 import Profile from './pages/Profile';
 import VendorDashboard from './pages/VendorDashboard';
+import SearchResults from './pages/SearchResults';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/search" element={<SearchResults />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/travel/trains/live" element={<LiveTrainBoard />} />

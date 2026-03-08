@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, Package } from 'lucide-react';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
 
     return (
         <footer style={{
@@ -17,9 +18,10 @@ const Footer = () => {
             position: 'relative',
             textAlign: 'left'
         }}>
-            <div className="container mx-auto px-6 max-w-7xl">
+            <div className="w-full max-w-7xl mx-auto px-6" style={{ margin: '0 auto' }}>
                 {/* About Us / The Story */}
                 <div className="mb-16 text-center max-w-4xl mx-auto" style={{
+                    margin: '0 auto',
                     background: 'rgba(15, 23, 42, 0.65)',
                     backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -66,10 +68,10 @@ const Footer = () => {
                     <div>
                         <h4 className="text-lg font-bold text-white mb-4">Quick Links</h4>
                         <ul className="space-y-3 text-sm" style={{ listStyle: 'none', padding: 0 }}>
-                            <li style={{ marginBottom: '0.75rem' }}><Link to="/" className="hover:text-[#60a5fa] transition-colors duration-300">Shop Limitless</Link></li>
-                            <li style={{ marginBottom: '0.75rem' }}><Link to="/booking" className="hover:text-[#60a5fa] transition-colors duration-300">Live Travel Booking</Link></li>
-                            <li style={{ marginBottom: '0.75rem' }}><Link to="/health" className="hover:text-[#34d399] transition-colors duration-300">Health First</Link></li>
-                            <li><Link to="/wallet" className="hover:text-[#a78bfa] transition-colors duration-300">Universal Wallet</Link></li>
+                            <li style={{ marginBottom: '0.75rem' }}><Link to="/" className="text-slate-300 hover:text-[#60a5fa] transition-colors duration-300">Shop Limitless</Link></li>
+                            <li style={{ marginBottom: '0.75rem' }}><Link to="/booking" className="text-slate-300 hover:text-[#60a5fa] transition-colors duration-300">Live Travel Booking</Link></li>
+                            <li style={{ marginBottom: '0.75rem' }}><Link to="/health" className="text-slate-300 hover:text-[#34d399] transition-colors duration-300">Health First</Link></li>
+                            <li><Link to="/wallet" className="text-slate-300 hover:text-[#a78bfa] transition-colors duration-300">Universal Wallet</Link></li>
                         </ul>
                     </div>
 
@@ -77,10 +79,10 @@ const Footer = () => {
                     <div>
                         <h4 className="text-lg font-bold text-white mb-4">Support</h4>
                         <ul className="space-y-3 text-sm" style={{ listStyle: 'none', padding: 0 }}>
-                            <li style={{ marginBottom: '0.75rem' }}><a href="#" className="hover:text-white transition-colors duration-300">Help Center / FAQ</a></li>
-                            <li style={{ marginBottom: '0.75rem' }}><a href="#" className="hover:text-white transition-colors duration-300">Track Order / Booking</a></li>
-                            <li style={{ marginBottom: '0.75rem' }}><a href="#" className="hover:text-white transition-colors duration-300">Privacy Policy</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors duration-300">Terms of Service</a></li>
+                            <li style={{ marginBottom: '0.75rem' }}><a href="#" className="text-slate-300 hover:text-white transition-colors duration-300">Help Center / FAQ</a></li>
+                            <li style={{ marginBottom: '0.75rem' }}><span onClick={() => setShowTrackingModal(true)} className="text-slate-300 hover:text-white transition-colors duration-300 cursor-pointer">Track Order / Booking</span></li>
+                            <li style={{ marginBottom: '0.75rem' }}><a href="#" className="text-slate-300 hover:text-white transition-colors duration-300">Privacy Policy</a></li>
+                            <li><a href="#" className="text-slate-300 hover:text-white transition-colors duration-300">Terms of Service</a></li>
                         </ul>
                     </div>
 
@@ -110,6 +112,33 @@ const Footer = () => {
                     <p className="m-0">Built with MERN & Socket.io</p>
                 </div>
             </div>
+
+            {/* Track Order Modal */}
+            {showTrackingModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" style={{ pointerEvents: 'auto' }}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-sm w-full shadow-2xl relative">
+                        <button onClick={() => setShowTrackingModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+                        <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                            <Package className="text-blue-400" size={28} />
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2 text-center">Track Your Purchase</h2>
+                        <p className="text-slate-400 text-sm mb-6 text-center">Enter your Order ID or Booking PNR to track real-time status.</p>
+
+                        <div className="space-y-4 mb-6 text-left">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Order / PNR ID</label>
+                                <input type="text" placeholder="e.g. ORD-12345 or PNR-XYZ" className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Email Address</label>
+                                <input type="email" placeholder="account@email.com" className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
+                            </div>
+                        </div>
+
+                        <button onClick={() => { setShowTrackingModal(false); alert('Tracking link sent to email!'); }} className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-3 font-bold shadow-lg shadow-blue-600/30 transition-all">Track Status</button>
+                    </div>
+                </div>
+            )}
         </footer>
     );
 };

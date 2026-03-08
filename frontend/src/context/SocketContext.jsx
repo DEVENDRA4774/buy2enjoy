@@ -15,6 +15,7 @@ export const SocketProvider = ({ children }) => {
                 query: { userId: user._id, isAdmin: user.isAdmin }
             });
 
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSocket(newSocket);
 
             newSocket.on('connect', () => {

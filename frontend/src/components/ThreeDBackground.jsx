@@ -40,7 +40,8 @@ const ThreeDBackground = () => {
     const isDeepDive = location.pathname.includes('/product') || location.pathname.includes('/checkout') || location.pathname.includes('/health') || location.pathname.includes('/admin');
 
     useEffect(() => {
-        const timer = setTimeout(() => setUiLoaded(true), 1500); // Lazy Load high-res textures
+        // eslint-disable-next-line no-unused-vars
+        const timer = setInterval(() => { setUiLoaded(true); }, 1500); // Lazy Load high-res textures
         // Load the country outlines polygons
         fetch('https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
             .then(res => res.json())

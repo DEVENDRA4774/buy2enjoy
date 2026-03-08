@@ -15,7 +15,17 @@ const Navbar = () => {
     const [notifications, setNotifications] = React.useState([]);
     const [showNotifications, setShowNotifications] = React.useState(false);
     const [showLocationModal, setShowLocationModal] = React.useState(false);
+    const [isCartDrawerOpen, setIsCartDrawerOpen] = React.useState(false);
+    const [animateCart, setAnimateCart] = React.useState(false);
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        if (cartCount > 0) {
+            setAnimateCart(true);
+            const timer = setTimeout(() => setAnimateCart(false), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [cartCount]);
 
     React.useEffect(() => {
         // Mock notifications for Super App demonstration
@@ -54,8 +64,13 @@ const Navbar = () => {
                     <div className="relative flex items-center cursor-pointer mr-2" onClick={() => setShowLocationModal(!showLocationModal)}>
                         <div className="flex items-center gap-1.5 text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 transition-colors">
                             <MapPin size={16} className="text-[#34d399]" />
-                            <span className="text-sm font-medium">
-                                {location.city}{location.country !== 'Loading...' && location.country ? `, ${location.country}` : ''}
+                            <span className="text-sm font-medium flex items-center gap-2">
+                                <span>{location.city}{location.country !== 'Loading...' && location.country ? `, ${location.country}` : ''}</span>
+                                {location.temperature !== null && location.temperature !== undefined && (
+                                    <span className="text-xs font-bold bg-white/10 px-1.5 py-0.5 rounded-md text-sky-200">
+                                        {Math.round(location.temperature)}°C
+                                    </span>
+                                )}
                             </span>
                             <ChevronDown size={14} className="text-gray-400" />
                         </div>
@@ -85,14 +100,16 @@ const Navbar = () => {
                         icon={<Package size={20} />}
                         label="Live Booking"
                     />
-                    <SmartButton
-                        destination="/cart"
-                        customClass="nav-link p-0 hover:text-primary transition-colors"
-                        textClass=""
-                        hoverClass=""
-                        icon={<ShoppingCart size={20} />}
-                        label={<>Cart {cartCount > 0 && <span className="badge ml-1">{cartCount}</span>}</>}
-                    />
+                    <div id="nav-cart-icon" className={animateCart ? 'animate-cart-pop flex items-center' : 'flex items-center'}>
+                        <SmartButton
+                            onClickOverride={() => setIsCartDrawerOpen(true)}
+                            customClass="nav-link p-0 hover:text-primary transition-colors cursor-pointer"
+                            textClass=""
+                            hoverClass=""
+                            icon={<ShoppingCart size={20} />}
+                            label={<>Cart {cartCount > 0 && <span className="badge ml-1">{cartCount}</span>}</>}
+                        />
+                    </div>
                     {user && (
                         <div className="relative flex items-center cursor-pointer mr-2">
                             <div onClick={() => setShowNotifications(!showNotifications)}>
@@ -180,6 +197,35 @@ const Navbar = () => {
                             label="Sign In"
                         />
                     )}
+                </div>
+            </div>
+
+            {/* Cart Slide-Drawer */}
+            <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity duration-300 ${isCartDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsCartDrawerOpen(false)}></div>
+            <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-slate-900 border-l border-slate-700 shadow-2xl z-[101] transform transition-transform duration-300 ease-out ${isCartDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div className="p-6 h-full flex flex-col">
+                    <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2"><ShoppingCart className="text-indigo-400" /> Your Cart</h2>
+                        <button onClick={() => setIsCartDrawerOpen(false)} className="text-gray-400 hover:text-white transition-colors bg-slate-800 rounded-full p-1.5"><ChevronDown size={20} className="rotate-90" /></button>
+                    </div>
+                    {/* Cart contents summary */}
+                    <div className="flex-grow flex flex-col items-center justify-center text-slate-500">
+                        <Package size={56} className="mb-4 opacity-30" />
+                        <p className="text-sm font-medium">Your mixed cart is ready.</p>
+                        <p className="text-xs mt-1">Groceries + Travel + Healthcare</p>
+                    </div>
+                    <div className="mt-auto border-t border-slate-800 pt-6">
+                        <div className="flex justify-between text-white font-bold text-lg mb-4">
+                            <span>Subtotal</span>
+                            <span>$0.00</span>
+                        </div>
+                        <SmartButton
+                            label="Proceed to Secure Checkout"
+                            icon="🔒"
+                            customClass="w-full bg-indigo-600 hover:bg-indigo-500 text-white justify-center py-3 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all"
+                            destination="/checkout"
+                        />
+                    </div>
                 </div>
             </div>
         </nav>

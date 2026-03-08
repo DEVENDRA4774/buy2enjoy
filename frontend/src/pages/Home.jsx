@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../utils/api';
+import React, { useState, useEffect, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, Plane, Stethoscope, Wallet, ChevronRight, CloudLightning, ThermometerSun } from 'lucide-react';
 import SmartButton from '../components/SmartButton';
 import LocationContext from '../context/LocationContext';
 import AuthContext from '../context/AuthContext';
 
 const Home = () => {
-    const { user } = useContext(AuthContext);
     const { location } = useContext(LocationContext);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isShaking, setIsShaking] = useState(false);
+    const [showMedicalModal, setShowMedicalModal] = useState(false);
     const navigate = useNavigate();
 
     // Dynamically generate categories based on location and weather
@@ -74,11 +74,47 @@ const Home = () => {
         return baseCategories;
     };
 
-    const categories = getDynamicCategories();
+    const dynamicCategories = getDynamicCategories();
 
-    const [bookedFlight, setBookedFlight] = useState(localStorage.getItem('bookedFlight'));
-    const [bookedDoctor, setBookedDoctor] = useState(localStorage.getItem('bookedDoctor'));
     const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+    const placeholders = [
+        "Search for 'Noise Cancelling Headphones'...",
+        "Search for 'Cardiologist near me'...",
+        "Search for 'Flights to Tokyo'...",
+        "Search for 'Organic Avocados'..."
+    ];
+
+    useEffect(() => {
+        const pLen = placeholders.length;
+        const interval = setInterval(() => {
+            setPlaceholderIndex((prev) => (prev + 1) % pLen);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [placeholders.length]);
+
+    const getContextBanner = () => {
+        if (location?.weather === 'rain') {
+            return { title: "Heavy Rain Expected", subtitle: "Stay indoors. Order hot food & umbrellas with 15-min delivery.", icon: "⛈️", border: "border-blue-500", bg: "rgba(59, 130, 246, 0.2)", action: "/" };
+        }
+        if (location?.weather === 'heatwave') {
+            return { title: "Extreme Heat Alert", subtitle: "Stay hydrated. AC servicing & cold groceries available now.", icon: "🌡️", border: "border-orange-500", bg: "rgba(249, 115, 22, 0.2)", action: "/" };
+        }
+        const hour = new Date().getHours();
+        if (hour >= 6 && hour <= 9) {
+            return { title: "Morning Commute", subtitle: "Grab a quick coffee and check live transit schedules.", icon: "🌅", border: "border-amber-500", bg: "rgba(245, 158, 11, 0.2)", action: "/booking" };
+        }
+        return { title: "Discover Local Events", subtitle: `See what's happening this weekend in ${location?.city || 'your area'}.`, icon: "🎪", border: "border-purple-500", bg: "rgba(168, 85, 247, 0.2)", action: "/wallet" };
+    };
+    const contextBanner = getContextBanner();
+
+    const handleLinkClick = (e, link, categoryTitle) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (categoryTitle === 'Health First' && link.includes('Doctor')) {
+            navigate('/health');
+        }
+    };
 
     return (
         <div style={{ pointerEvents: 'none', minHeight: '80vh', display: 'flex', flexDirection: 'column', paddingTop: '2rem' }}>
@@ -121,14 +157,25 @@ const Home = () => {
                             transition: 'color 0.5s ease',
                         }}
                     />
-                    <div style={{ background: '#6366f1', padding: '0.4rem 1.25rem', borderRadius: '30px', color: 'white', fontWeight: 'bold', cursor: 'pointer', marginLeft: '10px' }}>
+                    <div
+                        onClick={() => {
+                            if (!searchQuery.trim()) {
+                                setIsShaking(true);
+                                setTimeout(() => setIsShaking(false), 500);
+                            } else {
+                                navigate(`/search?q=${searchQuery}`);
+                            }
+                        }}
+                        className={isShaking ? 'animate-shake' : ''}
+                        style={{ background: '#6366f1', padding: '0.4rem 1.25rem', borderRadius: '30px', color: 'white', fontWeight: 'bold', cursor: 'pointer', marginLeft: '10px' }}
+                    >
                         Search
                     </div>
                 </div>
 
                 {/* Micro-copy below search */}
                 <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.9rem', color: '#94a3b8' }}>
-                    Trending right now: <span style={{ color: '#cbd5e1' }}>🚄 Express Rail to NY</span> | <span style={{ color: '#cbd5e1' }}>👕 Cyberpunk Apparel</span> | <span style={{ color: '#cbd5e1' }}>🩺 Online Consults</span>
+                    Trending right now: <span onClick={() => setSearchQuery('Express Rail')} className="cursor-pointer hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>🚄 Express Rail to NY</span> | <span onClick={() => setSearchQuery('Cyberpunk Apparel')} className="cursor-pointer hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>👕 Cyberpunk Apparel</span> | <span onClick={() => setSearchQuery('Online Consults')} className="cursor-pointer hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>🩺 Online Consults</span>
                 </div>
             </div>
 
@@ -200,13 +247,23 @@ const Home = () => {
                                                 <SmartButton
                                                     icon={icon}
                                                     label={label}
-                                                    destination={category.path}
+                                                    destination={
+                                                        (category.title === 'Health First' && (link.includes('Auto-Refill Prescriptions') || link.includes('View Private Lab Results'))) ? undefined : undefined
+                                                    }
                                                     onClickOverride={(e) => {
-                                                        if (category.title === 'Health First' && link.includes('Doctor')) {
+                                                        if (category.title === 'Shop Limitless') {
+                                                            let searchTerm = label;
+                                                            if (label.includes('Electronics')) searchTerm = 'Electronics';
+                                                            if (label.includes('Fashion')) searchTerm = 'Clothing';
+                                                            if (label.includes('Groceries') || label.includes('Waterproof') || label.includes('Coolers')) searchTerm = 'Groceries';
+                                                            if (label.includes('Micro-Drop')) searchTerm = 'Local Essentials';
+                                                            window.open(`/search?q=${encodeURIComponent(searchTerm)}`, '_blank');
+                                                        } else if (category.title === 'Health First' && (link.includes('Auto-Refill Prescriptions') || link.includes('View Private Lab Results'))) {
+                                                            setShowMedicalModal(true);
+                                                        } else if (category.title === 'Health First' && link.includes('Doctor')) {
                                                             handleLinkClick(e, link, category.title);
                                                         } else {
-                                                            // Default action: let the destination handle it
-                                                            // we pass undefined to override so it falls back to navigate
+                                                            navigate(category.path);
                                                         }
                                                     }}
                                                     customClass={`w-full justify-start text-left px-2 py-3 hover:bg-white/5 ${isHighlight ? 'text-[#fcd34d] font-bold' : 'text-[#cbd5e1]'}`}
@@ -398,6 +455,30 @@ const Home = () => {
                 </div>
             </div>
 
+            {/* Medical Security Modal */}
+            {showMedicalModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" style={{ pointerEvents: 'auto' }}>
+                    <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 max-w-sm w-full text-center shadow-[0_0_40px_rgba(16,185,129,0.15)] relative">
+                        <button onClick={() => setShowMedicalModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+                        <div className="bg-emerald-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
+                            <span className="text-3xl">🔒</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2">Security Verification</h2>
+                        <p className="text-emerald-400/80 text-sm mb-6">Enter your 4-digit Medical PIN or use Biometrics to access private health records.</p>
+
+                        <div className="flex justify-center gap-3 mb-6 relative">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="w-12 h-14 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center font-bold text-xl text-white">_</div>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowMedicalModal(false)} className="flex-1 px-4 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 text-sm font-bold transition">Cancel</button>
+                            <button onClick={() => { setShowMedicalModal(false); alert('Biometric Verified! Access Granted.'); }} className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 text-sm font-bold shadow-lg shadow-emerald-600/30 transition">Verify</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

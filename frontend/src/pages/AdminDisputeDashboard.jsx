@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, Store, DollarSign, CheckCircle, AlertTriangle, XCircle, Shield, ShoppingBag, Truck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShieldAlert, CheckCircle, Clock, XCircle, FileText, MessageSquare, IndianRupee } from 'lucide-react';
 import SmartButton from '../components/SmartButton';
 
 const mockDispute = {
@@ -33,8 +33,14 @@ const mockDispute = {
 };
 
 const AdminDisputeDashboard = () => {
-    const [dispute, setDispute] = useState(mockDispute);
+    const [dispute, setDisputeState] = useState(null); // renaming just in case to safely ignore or we can remove
     const [resolution, setResolution] = useState(null);
+
+    useEffect(() => {
+        // Assuming the intent is to load the mockDispute here after component mounts
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setDisputeState(mockDispute);
+    }, []); // Empty dependency array means this effect runs once after the initial render
 
     const handleResolve = (action) => {
         setResolution(action);

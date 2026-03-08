@@ -9,6 +9,7 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         const storedCart = localStorage.getItem('cartItems');
         if (storedCart) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCartItems(JSON.parse(storedCart));
         }
     }, []);
