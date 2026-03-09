@@ -10,6 +10,10 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isShaking, setIsShaking] = useState(false);
     const [showMedicalModal, setShowMedicalModal] = useState(false);
+    const [showBankModal, setShowBankModal] = useState(false);
+    const [bankSearchTerm, setBankSearchTerm] = useState('');
+    const [mockAccountNumber, setMockAccountNumber] = useState('');
+    const [mockRoutingNumber, setMockRoutingNumber] = useState('');
     const navigate = useNavigate();
 
     // Dynamically generate categories based on location and weather
@@ -95,16 +99,16 @@ const Home = () => {
 
     const getContextBanner = () => {
         if (location?.weather === 'rain') {
-            return { title: "Heavy Rain Expected", subtitle: "Stay indoors. Order hot food & umbrellas with 15-min delivery.", icon: "⛈️", border: "border-blue-500", bg: "rgba(59, 130, 246, 0.2)", action: "/" };
+            return { title: "Heavy Rain Expected", subtitle: "Stay indoors. Order hot food & umbrellas.", icon: "⛈️", border: "border-blue-500", bg: "rgba(59, 130, 246, 0.6)", action: "/" };
         }
         if (location?.weather === 'heatwave') {
-            return { title: "Extreme Heat Alert", subtitle: "Stay hydrated. AC servicing & cold groceries available now.", icon: "🌡️", border: "border-orange-500", bg: "rgba(249, 115, 22, 0.2)", action: "/" };
+            return { title: "Extreme Heat Alert", subtitle: "Stay hydrated. AC servicing available.", icon: "🌡️", border: "border-orange-500", bg: "rgba(249, 115, 22, 0.6)", action: "/" };
         }
         const hour = new Date().getHours();
         if (hour >= 6 && hour <= 9) {
-            return { title: "Morning Commute", subtitle: "Grab a quick coffee and check live transit schedules.", icon: "🌅", border: "border-amber-500", bg: "rgba(245, 158, 11, 0.2)", action: "/booking" };
+            return { title: "Morning Commute", subtitle: "Grab a quick coffee and check transit.", icon: "🌅", border: "border-amber-500", bg: "rgba(245, 158, 11, 0.6)", action: "/booking" };
         }
-        return { title: "Discover Local Events", subtitle: `See what's happening this weekend in ${location?.city || 'your area'}.`, icon: "🎪", border: "border-purple-500", bg: "rgba(168, 85, 247, 0.2)", action: "/wallet" };
+        return { title: "What's Happening?", subtitle: `Link your account to see events in ${location?.city || 'your area'}.`, icon: "🎪", border: "border-purple-500", bg: "rgba(168, 85, 247, 0.6)", action: "/login" };
     };
     const contextBanner = getContextBanner();
 
@@ -121,10 +125,10 @@ const Home = () => {
 
             {/* Hero Section */}
             <div style={{ textAlign: 'center', marginBottom: '2rem', pointerEvents: 'auto' }}>
-                <h1 style={{ color: 'white', textShadow: '0 4px 15px rgba(0,0,0,0.8)', fontSize: '3.5rem', marginBottom: '0.5rem', fontWeight: '800' }}>
+                <h1 style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', color: 'white', textShadow: '0 4px 15px rgba(0,0,0,0.8)', fontSize: '3.5rem', marginBottom: '0.5rem', fontWeight: '800' }}>
                     Shop, Travel, and Thrive. All in One Place.
                 </h1>
-                <p style={{ color: '#cbd5e1', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto', marginBottom: '2rem', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+                <p style={{ fontFamily: "'Montserrat', sans-serif", color: '#cbd5e1', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto', marginBottom: '2rem', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
                     Buy groceries, book a train, and see a doctor—without opening three different tabs.
                 </p>
             </div>
@@ -175,25 +179,112 @@ const Home = () => {
 
                 {/* Micro-copy below search */}
                 <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.9rem', color: '#94a3b8' }}>
-                    Trending right now: <span onClick={() => setSearchQuery('Express Rail')} className="cursor-pointer hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>🚄 Express Rail to NY</span> | <span onClick={() => setSearchQuery('Cyberpunk Apparel')} className="cursor-pointer hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>👕 Cyberpunk Apparel</span> | <span onClick={() => setSearchQuery('Online Consults')} className="cursor-pointer hover:text-white transition-colors" style={{ color: '#cbd5e1' }}>🩺 Online Consults</span>
+                    Trending in {location?.city || 'your area'}:
+                    <span onClick={() => setSearchQuery(`Local Events in ${location?.city || 'my area'}`)} className="cursor-pointer hover:text-white transition-colors ml-2" style={{ color: '#cbd5e1' }}>🎪 Local Events</span> |
+                    <span onClick={() => setSearchQuery(`Food Delivery ${location?.city || ''}`)} className="cursor-pointer hover:text-white transition-colors mx-2" style={{ color: '#cbd5e1' }}>🍔 Food Delivery</span> |
+                    <span onClick={() => setSearchQuery(`Doctors near ${location?.city || 'me'}`)} className="cursor-pointer hover:text-white transition-colors ml-2" style={{ color: '#cbd5e1' }}>🩺 Top Clinics</span>
                 </div>
             </div>
 
-            {/* 1. The Dynamic Context Banner */}
-            <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '800px', marginBottom: '3rem' }}>
-                <Link to={contextBanner.action}>
-                    <div className={`p-4 rounded-xl shadow-lg border-l-4 ${contextBanner.border} flex items-center justify-between hover:scale-105 transition-transform duration-300`} style={{ background: contextBanner.bg }}>
-                        <div className="flex items-center gap-4">
-                            <span className="text-3xl">{contextBanner.icon}</span>
+            {/* 1. Link Account Button */}
+            <div style={{ pointerEvents: 'auto', position: 'fixed', top: '5rem', right: '1.5rem', zIndex: 100 }}>
+                <div onClick={() => setShowBankModal(true)}
+                    className="hover:scale-105 transition-transform duration-300 flex items-center gap-2"
+                    style={{
+                        background: 'rgba(99, 102, 241, 0.8)',
+                        padding: '0.4rem 1.25rem',
+                        borderRadius: '30px',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                    <span className="text-sm">🔗</span>
+                    <span className="text-sm">Link Account</span>
+                </div>
+            </div>
+
+            {/* Bank Link Modal */}
+            {showBankModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4" style={{ pointerEvents: 'auto' }}>
+                    <div className="bg-slate-900 border border-indigo-500/30 rounded-2xl p-8 max-w-md w-full text-center shadow-[0_0_40px_rgba(99,102,241,0.15)] relative">
+                        <button onClick={() => setShowBankModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+                        <div className="bg-indigo-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/30">
+                            <span className="text-3xl">🏦</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2">Secure Bank Link</h2>
+                        <p className="text-indigo-400/80 text-sm mb-6">Enter mock details to simulate linking an external account to your Universal Wallet.</p>
+
+                        <div className="flex flex-col gap-4 mb-6 text-left">
                             <div>
-                                <h3 className="text-white font-bold text-lg m-0 leading-tight">{contextBanner.title}</h3>
-                                <p className="text-white/80 text-sm m-0 mt-1">{contextBanner.subtitle}</p>
+                                <label className="text-xs text-gray-400 mb-1 block">Search Bank</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Type to search (e.g. Chase, HDFC...)"
+                                        value={bankSearchTerm}
+                                        onChange={(e) => setBankSearchTerm(e.target.value)}
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 outline-none focus:border-indigo-500 mb-1"
+                                    />
+                                    <div className="custom-scrollbar" style={{ maxHeight: '120px', overflowY: 'auto', background: 'rgba(30, 41, 59, 1)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}>
+                                        {[
+                                            'Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'US Bank', 'PNC Bank', 'Truist', 'Capital One', 'TD Bank', 'Fifth Third Bank',
+                                            'HDFC Bank', 'ICICI Bank', 'State Bank of India (SBI)', 'Axis Bank', 'Kotak Mahindra Bank', 'Punjab National Bank (PNB)', 'Bank of Baroda',
+                                            'HSBC', 'Barclays', 'Standard Chartered', 'RBC Royal Bank', 'Scotiabank', 'BMO Bank of Montreal', 'CIBC', 'National Bank of Canada'
+                                        ].filter(bank => bank.toLowerCase().includes(bankSearchTerm.toLowerCase())).map((bank, i) => (
+                                            <div key={i} className="p-2 px-3 text-sm text-gray-300 hover:bg-indigo-600/30 hover:text-white cursor-pointer transition-colors border-b border-slate-700/50 last:border-0" onClick={() => setBankSearchTerm(bank)}>
+                                                {bank}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Account Number (Test input)</label>
+                                <input
+                                    type="text"
+                                    placeholder="123456789"
+                                    value={mockAccountNumber}
+                                    onChange={(e) => setMockAccountNumber(e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 outline-none focus:border-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Routing Number (Test input)</label>
+                                <input
+                                    type="text"
+                                    placeholder="000111222"
+                                    value={mockRoutingNumber}
+                                    onChange={(e) => setMockRoutingNumber(e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 outline-none focus:border-indigo-500"
+                                />
                             </div>
                         </div>
-                        <ChevronRight className="text-white/50" />
+
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowBankModal(false)} className="flex-1 px-4 py-3 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 font-bold transition">Cancel</button>
+                            <button
+                                onClick={() => {
+                                    if (!bankSearchTerm || !mockAccountNumber) {
+                                        alert('Please select a bank and enter an account number for testing.');
+                                        return;
+                                    }
+                                    localStorage.setItem('linkedBank', bankSearchTerm);
+                                    localStorage.setItem('linkedAccount', mockAccountNumber);
+                                    setShowBankModal(false);
+                                    alert(`Mock Account Linked!\nBank: ${bankSearchTerm}\nAccount: ${mockAccountNumber}`);
+                                    navigate('/wallet');
+                                }}
+                                className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/30 transition"
+                            >
+                                Link Account
+                            </button>
+                        </div>
                     </div>
-                </Link>
-            </div>
+                </div>
+            )}
 
             {/* Smart Home Dashboard Grid */}
             <div style={{ pointerEvents: 'auto', alignSelf: 'center', width: '100%', maxWidth: '1000px', marginBottom: '4rem' }}>

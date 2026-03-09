@@ -1,109 +1,129 @@
 const express = require('express');
 const router = express.Router();
-const Razorpay = require('razorpay');
-// const Order = require('../models/Order'); // Import Order model
-// const CommissionTier = require('../models/CommissionTier'); // Import Commission configurations
-
-// Initialize Razorpay (Replace with environment variables in production)
-/*
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-*/
+const asyncHandler = require('../middleware/asyncHandler');
+const { protect } = require('../middleware/authMiddleware');
+const { verifyWebhookSignature, verifyPaymentSignature } = require('../utils/razorpayVerify');
+const Order = require('../models/Order');
 
 /**
- * Endpoint: POST /api/payments/create-split-order
- * Description: Creates a Razorpay order and defines the split rules (Transfers) 
- * so funds are routed to the vendor's Linked Account and held in Escrow.
+ * POST /api/payments/verify
+ * Verify payment signature after Razorpay checkout on frontend.
  */
-router.post('/create-split-order', async (req, res) => {
-    try {
-        const { orderId, totalAmount, items } = req.body;
+router.post('/verify', protect, asyncHandler(async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
 
-        // 1. In a real scenario, you query your DB for the items and their vendors.
-        // For demonstration, we assume we calculated platform and vendor cuts:
-        // Example: $100 total. Platform takes 10% ($10). Vendor gets $90.
-        // Razorpay works in subunits (paisa/cents), so multiply by 100.
+    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
 
-        const amountInSubunits = totalAmount * 100;
+    if (!isValid) {
+        res.status(400);
+        throw new Error('Payment verification failed — signature mismatch');
+    }
 
-        // 2. Define the Transfers array for Razorpay Route
-        const transfers = items.map(item => {
-            // Calculate vendor's slice based on your CommissionTier schema logic
-            const vendorPayoutInSubunits = Math.round(item.vendorPayoutAmount * 100);
-
-            return {
-                account: item.razorpayLinkedAccountId, // e.g. "acc_8xV1qY4oH1G1a9"
-                amount: vendorPayoutInSubunits,
-                currency: 'INR',
-                notes: {
-                    itemId: item.id,
-                    vendorId: item.vendorId
-                },
-                // Hold the funds in the Nodal account until the item is delivered or service rendered!
-                on_hold: true,
-                // Optional: Hold until a specific timestamp (e.g., 48 hours from now)
-                // on_hold_until: Math.floor(Date.now() / 1000) + (48 * 60 * 60) 
+    // Mark order as paid
+    if (orderId) {
+        const order = await Order.findById(orderId);
+        if (order) {
+            order.isPaid = true;
+            order.paidAt = Date.now();
+            order.paymentResult = {
+                id: razorpay_payment_id,
+                status: 'completed',
+                update_time: new Date().toISOString()
             };
-        });
-
-        // 3. Create the Razorpay Order with the Transfer instructions
-        /*
-        const options = {
-            amount: amountInSubunits,
-            currency: 'INR',
-            receipt: `receipt_order_${orderId}`,
-            transfers: transfers // <--- This activates Multi-Party Routing
-        };
-
-        const razorpayOrder = await razorpay.orders.create(options);
-        res.status(200).json(razorpayOrder);
-        */
-
-        // Mocking the successful response for development
-        res.status(200).json({
-            id: 'order_mock123xyz',
-            amount: amountInSubunits,
-            currency: 'INR',
-            status: 'created',
-            transfers: transfers,
-            message: "Razorpay Order created. Funds will be held in Nodal Escrow upon successful payment."
-        });
-
-    } catch (error) {
-        console.error("Error creating split payment order:", error);
-        res.status(500).json({ message: "Server error processing payment route." });
+            await order.save();
+        }
     }
-});
+
+    res.json({ success: true, message: 'Payment verified successfully' });
+}));
 
 /**
- * Endpoint: POST /api/payments/release-escrow
- * Description: Called by the Admin Dispute Dashboard or an automated cron job
- * when an item is delivered. Releases funds from Nodal Escrow to Vendor's Bank.
+ * POST /api/payments/webhook
+ * Razorpay webhook handler — called by Razorpay servers.
+ * Verifies signature before processing any event.
  */
-router.post('/release-escrow', async (req, res) => {
-    try {
-        const { transferId, action } = req.body;
-        // action = 'release' OR 'reverse' (refund to user)
+router.post('/webhook', express.raw({ type: 'application/json' }), asyncHandler(async (req, res) => {
+    const signature = req.headers['x-razorpay-signature'];
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-        /*
-        if(action === 'release') {
-            // Release the specific transfer to the vendor
-            await razorpay.transfers.edit(transferId, { on_hold: false });
-            // Update DB: PayoutLog.payoutStatus = 'Transferred_To_Bank'
-        } else if (action === 'reverse') {
-            // Reverse the transfer back to the main node, then refund user
-            await razorpay.transfers.reverse(transferId, { amount: fullAmount });
-        }
-        */
-
-        res.status(200).json({ message: `Escrow Action '${action}' executed successfully on transfer ${transferId}.` });
-
-    } catch (error) {
-        console.error("Error managing escrow:", error);
-        res.status(500).json({ message: "Server error managing escrow state." });
+    if (!signature || !webhookSecret) {
+        res.status(400);
+        throw new Error('Missing signature or webhook secret');
     }
-});
+
+    const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const isValid = verifyWebhookSignature(body, signature, webhookSecret);
+
+    if (!isValid) {
+        res.status(400);
+        throw new Error('Webhook signature verification failed');
+    }
+
+    const event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    // Handle different webhook events
+    switch (event.event) {
+        case 'payment.captured': {
+            const paymentEntity = event.payload.payment.entity;
+            const receiptId = paymentEntity.notes?.orderId;
+            if (receiptId) {
+                const order = await Order.findById(receiptId);
+                if (order && !order.isPaid) {
+                    order.isPaid = true;
+                    order.paidAt = Date.now();
+                    order.paymentResult = {
+                        id: paymentEntity.id,
+                        status: 'captured',
+                        update_time: new Date().toISOString()
+                    };
+                    await order.save();
+                }
+            }
+            break;
+        }
+
+        case 'payment.failed': {
+            const paymentEntity = event.payload.payment.entity;
+            console.log(`Payment failed: ${paymentEntity.id}`, paymentEntity.error_description);
+            break;
+        }
+
+        case 'refund.processed': {
+            const refundEntity = event.payload.refund.entity;
+            console.log(`Refund processed: ${refundEntity.id}`);
+            break;
+        }
+
+        default:
+            console.log(`Unhandled webhook event: ${event.event}`);
+    }
+
+    // Always respond 200 to acknowledge receipt (Razorpay retries on non-2xx)
+    res.status(200).json({ received: true });
+}));
+
+/**
+ * POST /api/payments/create-order
+ * Create a Razorpay order (replaces the old mocked create-split-order).
+ */
+router.post('/create-order', protect, asyncHandler(async (req, res) => {
+    const { amount, currency, receipt, notes } = req.body;
+
+    // In production, create order via Razorpay SDK:
+    // const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
+    // const order = await razorpay.orders.create({ amount: amount * 100, currency, receipt, notes });
+    // res.json(order);
+
+    // Mock for development
+    res.json({
+        id: `order_${Date.now()}`,
+        amount: amount * 100,
+        currency: currency || 'INR',
+        receipt,
+        status: 'created',
+        notes,
+        message: 'Development mock — integrate Razorpay SDK for production'
+    });
+}));
 
 module.exports = router;

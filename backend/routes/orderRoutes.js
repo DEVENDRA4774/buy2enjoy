@@ -9,8 +9,10 @@ const {
     getOrders
 } = require('../controllers/orderController');
 const { protect, admin } = require('../middleware/authMiddleware');
+const validate = require('../middleware/validate');
+const { createOrderSchema } = require('../validators/orderValidators');
 
-router.route('/').post(protect, addOrderItems).get(protect, admin, getOrders);
+router.route('/').post(protect, validate(createOrderSchema), addOrderItems).get(protect, admin, getOrders);
 router.route('/myorders').get(protect, getMyOrders);
 router.route('/:id').get(protect, getOrderById);
 router.route('/:id/pay').put(protect, updateOrderToPaid);

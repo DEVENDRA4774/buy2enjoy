@@ -15,6 +15,27 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    phone: {
+        type: String,
+        default: ''
+    },
+    pin_code: {
+        type: String,
+        default: '',
+        index: true
+    },
+    city: {
+        type: String,
+        default: ''
+    },
+    wallet_balance: {
+        type: Number,
+        default: 0
+    },
+    loyalty_points: {
+        type: Number,
+        default: 0
+    },
     isAdmin: {
         type: Boolean,
         required: true,
@@ -23,6 +44,9 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Index on phone for OTP-based login lookups
+userSchema.index({ phone: 1 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);

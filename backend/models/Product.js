@@ -27,13 +27,17 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    images: [{
+        type: String
+    }],
     brand: {
         type: String,
         required: true
     },
     category: {
         type: String,
-        required: true
+        required: true,
+        index: true
     },
     description: {
         type: String,
@@ -43,6 +47,10 @@ const productSchema = new mongoose.Schema({
     rating: {
         type: Number,
         required: true,
+        default: 0
+    },
+    rating_avg: {
+        type: Number,
         default: 0
     },
     numReviews: {
@@ -55,6 +63,15 @@ const productSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    discount: {
+        type: Number,
+        default: 0
+    },
+    seller_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        index: true
+    },
     countInStock: {
         type: Number,
         required: true,
@@ -63,6 +80,9 @@ const productSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Compound index for common queries
+productSchema.index({ category: 1, price: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 module.exports = Product;
